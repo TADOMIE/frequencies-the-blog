@@ -1,0 +1,80 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 64 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Owner check: Strictly only the verified owner email (Guindo Luc) can modify content
+    function isOwner() {
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == 'tadominohero@gmail.com';
+    }
+
+    // Validation Blueprint for BlogEntry
+    function isValidBlogEntry(data, entryId) {
+      return data.keys().hasAll(['id', 'text', 'photoUrl', 'videoUrl', 'videoType', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'text', 'photoUrl', 'videoUrl', 'videoType', 'updatedAt'])
+        && data.id is string && data.id == entryId && data.id.size() >= 1 && data.id.size() <= 64
+        && data.text is string && data.text.size() <= 50000
+        && data.photoUrl is string && data.photoUrl.size() <= 800000
+        && data.videoUrl is string && data.videoUrl.size() <= 4096
+        && data.videoType is string && data.videoType in ['file', 'link', 'none']
+        && data.updatedAt == request.time;
+    }
+
+    // Validation Blueprint for BlogProfile
+    function isValidBlogProfile(data) {
+      return data.keys().hasAll(['authorPhotoUrl', 'updatedAt'])
+        && data.keys().hasOnly(['authorPhotoUrl', 'updatedAt'])
+        && data.authorPhotoUrl is string && data.authorPhotoUrl.size() <= 800000
+        && data.updatedAt == request.time;
+    }
+
+    // Publicly readable blog entries by exact ID; only owner can create or update
+    match /entries/{entryId} {
+      allow get: if isValidId(entryId);
+      allow list: if false;
+      allow create: if isOwner() && isValidId(entryId) && isValidBlogEntry(incoming(), entryId);
+      allow update: if isOwner()
+        && isValidId(entryId)
+        && isValidBlogEntry(incoming(), entryId)
+        && incoming().id == existing().id
+        && incoming().diff(existing()).affectedKeys().hasOnly(['text', 'photoUrl', 'videoUrl', 'videoType', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    // Publicly readable author profile settings; only owner can create or update
+    match /settings/{settingId} {
+      allow get: if isValidId(settingId) && settingId == 'profile';
+      allow list: if false;
+      allow create: if isOwner() && isValidId(settingId) && settingId == 'profile' && isValidBlogProfile(incoming());
+      allow update: if isOwner()
+        && isValidId(settingId)
+        && settingId == 'profile'
+        && isValidBlogProfile(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['authorPhotoUrl', 'updatedAt']);
+      allow delete: if false;
+    }
+  }
+}

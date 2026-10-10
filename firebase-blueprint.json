@@ -1,0 +1,72 @@
+{
+  "entities": {
+    "BlogEntry": {
+      "title": "BlogEntry",
+      "description": "A single chapter entry in the Frequencies personal music blog.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Entry identifier (e.g., entry-01).",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "text": {
+          "type": "string",
+          "description": "Entry prose text content.",
+          "maxLength": 50000
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "URL or data URL of the entry photo/cutout.",
+          "maxLength": 800000
+        },
+        "videoUrl": {
+          "type": "string",
+          "description": "URL of the entry video.",
+          "maxLength": 4096
+        },
+        "videoType": {
+          "type": "string",
+          "description": "Type of video source.",
+          "enum": ["file", "link", "none"]
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the last modification."
+        }
+      },
+      "required": ["id", "text", "photoUrl", "videoUrl", "videoType", "updatedAt"]
+    },
+    "BlogProfile": {
+      "title": "BlogProfile",
+      "description": "Author profile metadata for Guindo Luc.",
+      "type": "object",
+      "properties": {
+        "authorPhotoUrl": {
+          "type": "string",
+          "description": "URL or data URL of the author portrait photo.",
+          "maxLength": 800000
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the last modification."
+        }
+      },
+      "required": ["authorPhotoUrl", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/entries/{entryId}": {
+      "schema": { "$ref": "#/entities/BlogEntry" },
+      "description": "Publicly readable blog entries editable strictly by the blog owner."
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/BlogProfile" },
+      "description": "Publicly readable author profile settings editable strictly by the blog owner."
+    }
+  }
+}

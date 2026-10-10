@@ -1,0 +1,6 @@
+{
+  "name": "Frequencies",
+  "description": "How music through the years shaped who I was, who I am, and who I will probably be.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
