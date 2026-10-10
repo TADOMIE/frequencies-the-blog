@@ -17,7 +17,7 @@ import {
   handleFirestoreError,
   OperationType,
 } from './firebase';
-import { ArtistCutoutSlot, VideoSlot } from './components/MediaSlots';
+import { ArtistCutoutSlot, VideoSlot, AudioSlot } from './components/MediaSlots';
 import { FrequencyTipBubble, playHarmonicChord } from './components/FrequencyTipBubble';
 
 /**
@@ -101,7 +101,7 @@ function getArtistWikiUrl(artist: string): string {
 }
 
 /**
- * 8 Distinct Audio Frequency / Oscilloscope Wave Patterns — one unique waveform per Entry Title
+ * 9 Distinct Audio Frequency / Oscilloscope Wave Patterns — one unique waveform per Entry Title
  */
 const ENTRY_WAVE_PATTERNS: Record<
   string,
@@ -155,15 +155,48 @@ const ENTRY_WAVE_PATTERNS: Record<
     duration: '4.4s',
     dashArray: '530 1870',
   },
+  // 09. Unplugged — Pure unplugged analog sine-harmonic resonance wave
+  'entry-09': {
+    path: 'M 0 60 Q 45 12, 90 60 T 180 60 Q 225 22, 270 60 T 360 60 L 520 60 Q 565 8, 610 60 T 700 60 Q 745 20, 790 60 T 880 60 L 1200 60',
+    duration: '4.0s',
+    dashArray: '500 1900',
+  },
 };
 
 export type EraKey = 'Who I Was' | 'Who I Am' | "Who I'll Be";
+
+export type GenreFilterKey =
+  | 'All'
+  | 'Instrumental'
+  | 'Rock'
+  | 'Jazz'
+  | 'US Rap'
+  | 'Cloud Rap'
+  | 'French Rap'
+  | 'Culture'
+  | 'Audio post';
+
+const GENRE_FILTERS: GenreFilterKey[] = [
+  'All',
+  'Instrumental',
+  'Rock',
+  'Jazz',
+  'US Rap',
+  'Cloud Rap',
+  'French Rap',
+  'Culture',
+  'Audio post',
+];
 
 export interface BlogEntryData {
   id: string;
   number: string;
   title: string;
   era: EraKey;
+  genreTag: Exclude<GenreFilterKey, 'All'>;
+  hasAmericanahTag?: boolean;
+  hasAudioSlot?: boolean;
+  socialLens: string;
   artistTags: string[];
   accentVariant: 'red' | 'black';
   text: string;
@@ -173,8 +206,8 @@ export interface BlogEntryData {
 }
 
 /**
- * Initial 8 blog entries with exact titles, grouped under the three eras,
- * and completely empty editable text, photo, and video slots.
+ * Initial 9 blog entries with exact titles, genre tags, Americanah tags on entries 3, 4, and 8,
+ * exact word-for-word Social lens sentences under each title, and empty editable content slots.
  */
 const INITIAL_ENTRIES: BlogEntryData[] = [
   {
@@ -182,6 +215,10 @@ const INITIAL_ENTRIES: BlogEntryData[] = [
     number: '01',
     title: 'First Chords',
     era: 'Who I Was',
+    genreTag: 'Instrumental',
+    hasAmericanahTag: true,
+    socialLens:
+      "Taste is passed down in families, and a guitar placed in a child's hands says what a family values.",
     artistTags: [],
     accentVariant: 'red',
     text: '',
@@ -194,6 +231,9 @@ const INITIAL_ENTRIES: BlogEntryData[] = [
     number: '02',
     title: 'Inherited Records',
     era: 'Who I Was',
+    genreTag: 'Rock',
+    socialLens:
+      'The records that played at home are a generational archive of what each family chose to keep.',
     artistTags: [
       'Beatles',
       'Scorpions',
@@ -218,6 +258,10 @@ const INITIAL_ENTRIES: BlogEntryData[] = [
     number: '03',
     title: 'The Switch: Jazz',
     era: 'Who I Was',
+    genreTag: 'Jazz',
+    hasAmericanahTag: true,
+    socialLens:
+      'A teenager far from America chooses American rap, and like Ifemelu he watches a culture from the outside.',
     artistTags: ['Jazz', 'Ben Webster'],
     accentVariant: 'red',
     text: '',
@@ -230,6 +274,10 @@ const INITIAL_ENTRIES: BlogEntryData[] = [
     number: '04',
     title: 'Kendrick, Tyler & the New School',
     era: 'Who I Am',
+    genreTag: 'US Rap',
+    hasAmericanahTag: true,
+    socialLens:
+      'These artists speak about race and belonging, and from the outside I hear what Ifemelu noticed about identity.',
     artistTags: [
       'Jay-Z',
       'Kanye West',
@@ -250,6 +298,9 @@ const INITIAL_ENTRIES: BlogEntryData[] = [
     number: '05',
     title: 'Cloud Rap Years',
     era: 'Who I Am',
+    genreTag: 'Cloud Rap',
+    socialLens:
+      'Hype and internet culture show how my generation feels music before it understands it.',
     artistTags: [
       'Playboi Carti',
       'ASAP Rocky',
@@ -269,6 +320,8 @@ const INITIAL_ENTRIES: BlogEntryData[] = [
     number: '06',
     title: 'Back to the Words',
     era: 'Who I Am',
+    genreTag: 'French Rap',
+    socialLens: 'French rap turns language into a craft and into a way of belonging.',
     artistTags: ['Alpha Wann', 'Luidji', 'Josman', 'Jeune Lion', 'Népal'],
     accentVariant: 'black',
     text: '',
@@ -281,6 +334,9 @@ const INITIAL_ENTRIES: BlogEntryData[] = [
     number: '07',
     title: 'References & Culture',
     era: "Who I'll Be",
+    genreTag: 'Culture',
+    socialLens:
+      'Understanding a reference makes you an insider, and missing one reminds you that culture has doors.',
     artistTags: [],
     accentVariant: 'red',
     text: '',
@@ -293,8 +349,28 @@ const INITIAL_ENTRIES: BlogEntryData[] = [
     number: '08',
     title: "Who I'll Probably Be",
     era: "Who I'll Be",
+    genreTag: 'Culture',
+    hasAmericanahTag: true,
+    socialLens:
+      'Like Ifemelu I am an insider and an outsider at once, and music is where both meet.',
     artistTags: [],
     accentVariant: 'black',
+    text: '',
+    photoUrl: '',
+    videoUrl: '',
+    videoType: null,
+  },
+  {
+    id: 'entry-09',
+    number: '09',
+    title: 'Unplugged',
+    era: "Who I'll Be",
+    genreTag: 'Audio post',
+    hasAudioSlot: true,
+    socialLens:
+      'Making music instead of only consuming it changes how you listen to the world.',
+    artistTags: [],
+    accentVariant: 'red',
     text: '',
     photoUrl: '',
     videoUrl: '',
@@ -305,11 +381,24 @@ const INITIAL_ENTRIES: BlogEntryData[] = [
 const ERAS: { key: EraKey; index: string; range: string }[] = [
   { key: 'Who I Was', index: 'I', range: '01 — 03' },
   { key: 'Who I Am', index: 'II', range: '04 — 06' },
-  { key: "Who I'll Be", index: 'III', range: '07 — 08' },
+  { key: "Who I'll Be", index: 'III', range: '07 — 09' },
 ];
 
 export default function App() {
   const [entries, setEntries] = useState<BlogEntryData[]>(INITIAL_ENTRIES);
+  const [selectedGenre, setSelectedGenre] = useState<GenreFilterKey>('All');
+
+  // About section ("Why Frequencies?") state
+  const [aboutText, setAboutText] = useState<string>('');
+  const [aboutPhotoUrl, setAboutPhotoUrl] = useState<string>('');
+
+  // Audio files are kept in React state only (with no localStorage)
+  const [entryAudioMap, setEntryAudioMap] = useState<
+    Record<string, { url: string; type: 'file' | 'link' | null }>
+  >({
+    'entry-09': { url: '', type: null },
+  });
+
   const [authorPhotoUrl, setAuthorPhotoUrl] = useState<string>('');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -330,6 +419,16 @@ export default function App() {
   useEffect(() => {
     authorPhotoRef.current = authorPhotoUrl;
   }, [authorPhotoUrl]);
+
+  const aboutTextRef = useRef<string>(aboutText);
+  useEffect(() => {
+    aboutTextRef.current = aboutText;
+  }, [aboutText]);
+
+  const aboutPhotoRef = useRef<string>(aboutPhotoUrl);
+  useEffect(() => {
+    aboutPhotoRef.current = aboutPhotoUrl;
+  }, [aboutPhotoUrl]);
 
   const textDebounceTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
@@ -363,7 +462,7 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Subscribe to each of the 8 known blog entry documents by ID (uses `get` permission, never `list`)
+  // Subscribe to each of the 9 known blog entry documents by ID (uses `get` permission, never `list`)
   useEffect(() => {
     const unsubscribes = INITIAL_ENTRIES.map((initialEntry) => {
       const entryDocRef = doc(db, 'entries', initialEntry.id);
@@ -380,6 +479,10 @@ export default function App() {
                 ? {
                     ...item,
                     text: typeof data.text === 'string' ? data.text : '',
+                    socialLens:
+                      typeof data.socialLens === 'string' && data.socialLens.length > 0
+                        ? data.socialLens
+                        : item.socialLens,
                     photoUrl: typeof data.photoUrl === 'string' ? data.photoUrl : '',
                     videoUrl: typeof data.videoUrl === 'string' ? data.videoUrl : '',
                     videoType:
@@ -402,16 +505,23 @@ export default function App() {
     };
   }, []);
 
-  // Subscribe to author profile photo from Firestore
+  // Subscribe to author profile photo and "Why Frequencies?" About section from Firestore
   useEffect(() => {
     const profileRef = doc(db, 'settings', 'profile');
     const unsubscribe = onSnapshot(
       profileRef,
       (docSnap) => {
         if (docSnap.exists()) {
+          if (docSnap.metadata.hasPendingWrites) return;
           const data = docSnap.data();
           if (typeof data.authorPhotoUrl === 'string') {
             setAuthorPhotoUrl(data.authorPhotoUrl);
+          }
+          if (typeof data.aboutText === 'string') {
+            setAboutText(data.aboutText);
+          }
+          if (typeof data.aboutPhotoUrl === 'string') {
+            setAboutPhotoUrl(data.aboutPhotoUrl);
           }
         }
       },
@@ -431,6 +541,7 @@ export default function App() {
       await setDoc(doc(db, 'entries', updatedEntry.id), {
         id: updatedEntry.id.slice(0, 64),
         text: updatedEntry.text.slice(0, 50000),
+        socialLens: updatedEntry.socialLens.slice(0, 2000),
         photoUrl: updatedEntry.photoUrl.slice(0, 800000),
         videoUrl: updatedEntry.videoUrl.slice(0, 4096),
         videoType: updatedEntry.videoType ?? 'none',
@@ -440,6 +551,27 @@ export default function App() {
     } catch (error) {
       setSaveStatus('idle');
       handleFirestoreError(error, OperationType.WRITE, path);
+    }
+  };
+
+  const persistProfileSettings = async (
+    nextAuthorPhoto: string,
+    nextAboutText: string,
+    nextAboutPhoto: string
+  ) => {
+    if (!auth.currentUser) return;
+    setSaveStatus('saving');
+    try {
+      await setDoc(doc(db, 'settings', 'profile'), {
+        authorPhotoUrl: nextAuthorPhoto.slice(0, 800000),
+        aboutText: nextAboutText.slice(0, 20000),
+        aboutPhotoUrl: nextAboutPhoto.slice(0, 800000),
+        updatedAt: serverTimestamp(),
+      });
+      setSaveStatus('saved');
+    } catch (error) {
+      setSaveStatus('idle');
+      handleFirestoreError(error, OperationType.WRITE, 'settings/profile');
     }
   };
 
@@ -454,6 +586,30 @@ export default function App() {
             clearTimeout(textDebounceTimersRef.current[id]);
           }
           textDebounceTimersRef.current[id] = setTimeout(() => {
+            void persistEntryChange(next);
+          }, 350);
+          return next;
+        }
+        return item;
+      })
+    );
+  };
+
+  /**
+   * Editable Social Lens sentence handler (strictly owner-only)
+   */
+  const updateEntrySocialLens = (id: string, socialLens: string) => {
+    if (!isOwner) return;
+    setSaveStatus('saving');
+    setEntries((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          const next = { ...item, socialLens };
+          const timerKey = `lens-${id}`;
+          if (textDebounceTimersRef.current[timerKey]) {
+            clearTimeout(textDebounceTimersRef.current[timerKey]);
+          }
+          textDebounceTimersRef.current[timerKey] = setTimeout(() => {
             void persistEntryChange(next);
           }, 350);
           return next;
@@ -495,24 +651,44 @@ export default function App() {
     );
   };
 
+  // Audio files are kept in React state only, with no localStorage
+  const updateEntryAudio = (
+    id: string,
+    audioUrl: string,
+    audioType: 'file' | 'link' | null
+  ) => {
+    setEntryAudioMap((prev) => ({
+      ...prev,
+      [id]: { url: audioUrl, type: audioType },
+    }));
+  };
+
+  const handleUpdateAboutText = (text: string) => {
+    if (!isOwner) return;
+    setAboutText(text);
+    setSaveStatus('saving');
+    if (textDebounceTimersRef.current['about-text']) {
+      clearTimeout(textDebounceTimersRef.current['about-text']);
+    }
+    textDebounceTimersRef.current['about-text'] = setTimeout(() => {
+      void persistProfileSettings(authorPhotoRef.current, text, aboutPhotoRef.current);
+    }, 350);
+  };
+
+  const handleUpdateAboutPhoto = (photoUrl: string) => {
+    if (!isOwner) return;
+    setAboutPhotoUrl(photoUrl);
+    void persistProfileSettings(authorPhotoRef.current, aboutTextRef.current, photoUrl);
+  };
+
   const handleUpdateAuthorPhoto = async (photoUrl: string) => {
     if (!isOwner) return;
     setAuthorPhotoUrl(photoUrl);
-    setSaveStatus('saving');
-    try {
-      await setDoc(doc(db, 'settings', 'profile'), {
-        authorPhotoUrl: photoUrl.slice(0, 800000),
-        updatedAt: serverTimestamp(),
-      });
-      setSaveStatus('saved');
-    } catch (error) {
-      setSaveStatus('idle');
-      handleFirestoreError(error, OperationType.WRITE, 'settings/profile');
-    }
+    await persistProfileSettings(photoUrl, aboutTextRef.current, aboutPhotoRef.current);
   };
 
   /**
-   * Flushes all current entries and the author photo to Firestore while still authenticated,
+   * Flushes all current entries and profile settings to Firestore while still authenticated,
    * and then signs out to lock the website into read-only mode with all changes live.
    */
   const saveAllAndLock = async () => {
@@ -531,6 +707,7 @@ export default function App() {
             setDoc(doc(db, 'entries', entry.id), {
               id: entry.id.slice(0, 64),
               text: entry.text.slice(0, 50000),
+              socialLens: entry.socialLens.slice(0, 2000),
               photoUrl: entry.photoUrl.slice(0, 800000),
               videoUrl: entry.videoUrl.slice(0, 4096),
               videoType: entry.videoType ?? 'none',
@@ -539,6 +716,8 @@ export default function App() {
           ),
           setDoc(doc(db, 'settings', 'profile'), {
             authorPhotoUrl: authorPhotoRef.current.slice(0, 800000),
+            aboutText: aboutTextRef.current.slice(0, 20000),
+            aboutPhotoUrl: aboutPhotoRef.current.slice(0, 800000),
             updatedAt: serverTimestamp(),
           }),
         ]);
@@ -593,6 +772,11 @@ export default function App() {
     }
   };
 
+  const filteredEntries =
+    selectedGenre === 'All'
+      ? entries
+      : entries.filter((entry) => entry.genreTag === selectedGenre);
+
   return (
     <div id="top" className="min-h-screen bg-[#FFFFFF] text-[#0A0A0A] selection:bg-[#D7263D] selection:text-[#FFFFFF]">
       {/* Top Bar Navigation (Strict 3-Zone Contract + Mobile Menu Drawer) */}
@@ -610,8 +794,15 @@ export default function App() {
             Frequencies <span className="text-[#D7263D] mx-1.5" aria-hidden="true">·</span> <span className="text-[#1D3045]">Guindo Luc</span>
           </a>
 
-          {/* Zone 2: Clean Text Navigation Links */}
+          {/* Zone 2: Clean Text Navigation Links (Includes new "About" link) */}
           <nav className="hidden md:flex items-center gap-8 text-[11px] tracking-[0.22em] uppercase text-[#1D3045]">
+            <button
+              type="button"
+              onClick={() => scrollToElement('about-section')}
+              className="hover:text-[#D7263D] transition-colors whitespace-nowrap cursor-pointer"
+            >
+              About
+            </button>
             <button
               type="button"
               onClick={() => scrollToElement('timeline-index')}
@@ -661,7 +852,7 @@ export default function App() {
                 onClick={() => scrollToElement('timeline-index')}
                 className="hidden md:inline-flex items-center gap-2 px-4 py-2 border border-[#0A0A0A] text-[10px] tracking-[0.22em] uppercase text-[#0A0A0A] hover:bg-[#D7263D] hover:border-[#D7263D] hover:text-[#FFFFFF] transition-colors whitespace-nowrap cursor-pointer"
               >
-                <span>8 Entries</span>
+                <span>9 Entries</span>
               </button>
             )}
 
@@ -682,9 +873,16 @@ export default function App() {
           <div className="md:hidden bg-[#FFFFFF] border-b border-[#0A0A0A] px-6 py-8 space-y-6">
             <div className="space-y-3">
               <div className="text-[10px] tracking-[0.25em] uppercase text-[#1D3045]">
-                Eras
+                Navigation &amp; Eras
               </div>
               <div className="flex flex-col items-start gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => scrollToElement('about-section')}
+                  className="text-sm uppercase tracking-[0.18em] text-[#0A0A0A] hover:text-[#D7263D] font-medium cursor-pointer"
+                >
+                  About · Why Frequencies?
+                </button>
                 <button
                   type="button"
                   onClick={() => scrollToElement('timeline-index')}
@@ -718,7 +916,7 @@ export default function App() {
 
             <div className="border-t border-[#0A0A0A]/12 pt-5 space-y-3">
               <div className="text-[10px] tracking-[0.25em] uppercase text-[#1D3045]">
-                Entries (01 — 08)
+                Entries (01 — 09)
               </div>
               <div className="grid grid-cols-1 gap-2">
                 {entries.map((entry) => (
@@ -738,7 +936,7 @@ export default function App() {
         )}
       </header>
 
-      {/* 1. HERO SECTION: Full-viewport, oversized uppercase light headline with red frequency wave passing through, subtitle, slow artist marquee, scroll cue */}
+      {/* 1. HERO SECTION: Full-viewport, oversized uppercase light headline with red frequency wave passing through, subtitle + small About link, slow artist marquee, scroll cue */}
       <section className="relative min-h-[calc(100vh-4rem)] flex flex-col justify-between bg-[#FFFFFF] border-b border-[#0A0A0A]">
         {/* Main Hero Editorial Stage */}
         <div className="max-w-[1440px] w-full mx-auto px-6 md:px-12 pt-14 md:pt-24 pb-12 flex-1 flex flex-col justify-between">
@@ -747,7 +945,7 @@ export default function App() {
             <div className="flex items-center gap-2.5 text-[11px] tracking-[0.26em] uppercase text-[#1D3045]">
               <span>Blog</span>
               <span aria-hidden="true">·</span>
-              <span className="tabular-nums">08 Chapters</span>
+              <span className="tabular-nums">09 Entries</span>
             </div>
             <div className="text-[11px] tracking-[0.26em] uppercase text-[#D7263D]">
               Who I Was · Who I Am · Who I&apos;ll Be
@@ -817,9 +1015,25 @@ export default function App() {
               transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
               className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end"
             >
-              <p className="md:col-span-8 text-lg md:text-2xl lg:text-[28px] font-light leading-[1.35] tracking-[-0.01em] text-[#0A0A0A] max-w-3xl">
-                How music through the years shaped who I was, who I am, and who I will probably be.
-              </p>
+              <div className="md:col-span-8 space-y-4">
+                <p className="text-lg md:text-2xl lg:text-[28px] font-light leading-[1.35] tracking-[-0.01em] text-[#0A0A0A] max-w-3xl">
+                  How music through the years shaped who I was, who I am, and who I will probably be.
+                </p>
+
+                {/* Small "About" link in the hero under the subtitle */}
+                <div>
+                  <a
+                    href="#about-section"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      scrollToElement('about-section');
+                    }}
+                    className="inline-flex items-center gap-2 text-[11px] tracking-[0.26em] uppercase text-[#1D3045] hover:text-[#D7263D] border-b border-[#1D3045]/30 hover:border-[#D7263D] pb-0.5 transition-colors cursor-pointer"
+                  >
+                    <span>About · Why Frequencies?</span>
+                  </a>
+                </div>
+              </div>
 
               {/* Scroll Cue */}
               <div className="md:col-span-4 flex md:justify-end">
@@ -867,7 +1081,150 @@ export default function App() {
         </div>
       </section>
 
-      {/* 2. TIMELINE INDEX: Three eras (Who I Was / Who I Am / Who I'll Be) with the 8 entries listed under them */}
+      {/* ADDITION 1: ABOUT SECTION "Why Frequencies?" (Not a numbered entry, does not appear in genre filter or change entry count) */}
+      <section
+        id="about-section"
+        className="py-24 md:py-36 border-b border-[#0A0A0A] bg-[#FFFFFF] scroll-mt-16"
+      >
+        <div className="max-w-[1440px] mx-auto px-6 md:px-12">
+          <motion.div
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {/* Top Metadata Row with small navy "Americanah" tag near the title */}
+            <div className="flex flex-wrap items-center justify-between gap-4 text-[11px] tracking-[0.24em] uppercase text-[#1D3045] mb-6">
+              <div className="flex items-center gap-3">
+                <span className="text-[#D7263D] font-medium">About</span>
+                <span aria-hidden="true">·</span>
+                <span className="inline-block border border-[#1D3045]/40 text-[#1D3045] px-2 py-0.5 text-[10px] tracking-[0.22em] uppercase">
+                  Americanah
+                </span>
+              </div>
+              <span className="text-[10px] tracking-[0.22em] uppercase text-[#1D3045]/75">
+                Prologue
+              </span>
+            </div>
+
+            {/* Oversized Uppercase Headline */}
+            <h2 className="text-4xl sm:text-5xl md:text-7xl lg:text-[84px] font-extralight uppercase tracking-[-0.03em] leading-[0.92] text-[#0A0A0A]">
+              Why Frequencies?
+            </h2>
+
+            {/* Thin Red Line drawing in under the headline */}
+            <motion.div
+              initial={prefersReducedMotion ? false : { scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.85, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              className="h-[2px] bg-[#D7263D] origin-left mt-6 md:mt-8 mb-14 md:mb-20"
+            />
+          </motion.div>
+
+          {/* About Content Grid: Left = Empty Editable Text Area (~150 words) | Right = Small Optional Empty Photo Slot */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+            <motion.div
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:col-span-8 flex flex-col"
+            >
+              <div className="flex items-center justify-between border-b border-[#0A0A0A]/15 pb-2.5 mb-5">
+                <label
+                  htmlFor="textarea-why-frequencies"
+                  className="text-[11px] tracking-[0.22em] uppercase text-[#1D3045] font-medium"
+                >
+                  About · Why Frequencies?
+                </label>
+                <span className="text-[11px] tracking-[0.18em] uppercase text-[#1D3045]/70 tabular-nums">
+                  {aboutText.trim()
+                    ? `${aboutText.trim().split(/\s+/).length} words`
+                    : isOwner
+                    ? 'Blank Slot (~150 words)'
+                    : 'Pending'}
+                </span>
+              </div>
+
+              {isOwner ? (
+                <div className="space-y-3">
+                  <textarea
+                    id="textarea-why-frequencies"
+                    value={aboutText}
+                    onChange={(e) => handleUpdateAboutText(e.target.value)}
+                    placeholder='Write "Why Frequencies?" here (~150 words)...'
+                    rows={10}
+                    className="w-full min-h-[260px] p-6 bg-[#FFFFFF] border border-[#0A0A0A]/15 focus:border-[#D7263D] focus:outline-none text-base md:text-lg font-light leading-[1.75] text-[#0A0A0A] placeholder:text-[#1D3045]/35 resize-y transition-colors"
+                  />
+                  <div className="flex items-center justify-between text-[10px] tracking-[0.2em] uppercase text-[#1D3045]">
+                    <span>
+                      {saveStatus === 'saving'
+                        ? 'Syncing live changes...'
+                        : saveStatus === 'saved'
+                        ? 'All changes saved live'
+                        : 'Owner Edit Mode'}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void persistProfileSettings(
+                            authorPhotoRef.current,
+                            aboutTextRef.current,
+                            aboutPhotoRef.current
+                          )
+                        }
+                        className="px-3 py-1.5 border border-[#0A0A0A] text-[#0A0A0A] hover:border-[#D7263D] hover:text-[#D7263D] transition-colors cursor-pointer"
+                      >
+                        Save About
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveAllAndLock}
+                        className="px-3 py-1.5 bg-[#0A0A0A] text-[#FFFFFF] hover:bg-[#D7263D] transition-colors cursor-pointer"
+                      >
+                        Save &amp; Lock
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full min-h-[260px] p-6 bg-[#FFFFFF] border border-[#0A0A0A]/15 text-base md:text-lg font-light leading-[1.75] text-[#0A0A0A] whitespace-pre-wrap">
+                  {aboutText.trim() ? (
+                    aboutText
+                  ) : (
+                    <span className="text-xs tracking-[0.22em] uppercase text-[#1D3045]/45">
+                      About section coming soon.
+                    </span>
+                  )}
+                </div>
+              )}
+            </motion.div>
+
+            {/* Small optional empty photo slot beside it, reusing ArtistCutoutSlot */}
+            <motion.div
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:col-span-4 max-w-xs w-full"
+            >
+              <ArtistCutoutSlot
+                entryNumber="About"
+                entryTitle="Why Frequencies?"
+                photoUrl={aboutPhotoUrl}
+                onUpdatePhoto={handleUpdateAboutPhoto}
+                accentVariant="black"
+                isOwner={isOwner}
+                compact
+              />
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. TIMELINE INDEX: Three eras (Who I Was / Who I Am / Who I'll Be) with the 9 entries listed under them */}
       <section
         id="timeline-index"
         className="py-24 md:py-36 border-b border-[#0A0A0A] bg-[#FFFFFF]"
@@ -883,7 +1240,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between text-[11px] tracking-[0.26em] uppercase text-[#1D3045] mb-4">
               <span>Index</span>
-              <span className="tabular-nums">01 — 08</span>
+              <span className="tabular-nums">01 — 09</span>
             </div>
             <h2 className="text-4xl md:text-6xl lg:text-7xl font-extralight uppercase tracking-[-0.025em] leading-[0.95] text-[#0A0A0A]">
               Three Eras
@@ -897,7 +1254,7 @@ export default function App() {
             />
           </motion.div>
 
-          {/* Three Era Columns */}
+          {/* Three Era Columns (Social lens sentences are NOT shown in the timeline index) */}
           <div className="grid grid-cols-1 lg:grid-cols-3 border-t border-l border-[#0A0A0A]">
             {ERAS.map((era, eraIdx) => {
               const eraEntries = entries.filter((e) => e.era === era.key);
@@ -931,7 +1288,10 @@ export default function App() {
                         <li key={entry.id}>
                           <button
                             type="button"
-                            onClick={() => scrollToElement(entry.id)}
+                            onClick={() => {
+                              setSelectedGenre('All');
+                              setTimeout(() => scrollToElement(entry.id), 20);
+                            }}
                             className="w-full py-5 text-left group flex items-baseline justify-between gap-4 cursor-pointer transition-transform duration-200 ease-out hover:translate-x-1.5"
                           >
                             <div className="flex items-baseline gap-4 min-w-0">
@@ -988,12 +1348,38 @@ export default function App() {
               );
             })}
           </div>
+
+          {/* Genre Filter Bar (Includes "Audio post", excludes "Why Frequencies?" About section) */}
+          <div className="mt-12 pt-8 border-t border-[#0A0A0A]/15 flex flex-wrap items-center justify-between gap-4">
+            <div className="text-[11px] tracking-[0.24em] uppercase text-[#1D3045]">
+              Filter by Genre · <span className="tabular-nums text-[#D7263D]">{filteredEntries.length}</span> / 9 Entries
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {GENRE_FILTERS.map((genre) => {
+                const active = selectedGenre === genre;
+                return (
+                  <button
+                    key={genre}
+                    type="button"
+                    onClick={() => setSelectedGenre(genre)}
+                    className={`px-3 py-1.5 text-[10px] tracking-[0.2em] uppercase border transition-colors whitespace-nowrap cursor-pointer ${
+                      active
+                        ? 'bg-[#D7263D] border-[#D7263D] text-[#FFFFFF]'
+                        : 'bg-[#FFFFFF] border-[#0A0A0A]/25 text-[#1D3045] hover:border-[#0A0A0A] hover:text-[#0A0A0A]'
+                    }`}
+                  >
+                    {genre}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* 3. EIGHT ENTRY SECTIONS */}
+      {/* 3. NINE ENTRY SECTIONS */}
       <main>
-        {entries.map((entry) => (
+        {filteredEntries.map((entry) => (
           <article
             key={entry.id}
             id={entry.id}
@@ -1008,12 +1394,23 @@ export default function App() {
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               >
                 <div className="flex flex-wrap items-center justify-between gap-4 text-[11px] tracking-[0.24em] uppercase text-[#1D3045] mb-6">
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <span className="text-[#D7263D] font-medium tabular-nums">
                       Entry {entry.number}
                     </span>
                     <span aria-hidden="true">·</span>
                     <span>{entry.era}</span>
+                    <span aria-hidden="true">·</span>
+                    {/* Small Red Genre Tag (including "Audio post" on Entry 09) */}
+                    <span className="inline-block border border-[#D7263D] text-[#D7263D] px-2 py-0.5 text-[10px] tracking-[0.22em] uppercase font-medium">
+                      {entry.genreTag}
+                    </span>
+                    {/* Small Navy "Americanah" Tag on Entries 3, 4, and 8 */}
+                    {entry.hasAmericanahTag && (
+                      <span className="inline-block border border-[#1D3045]/40 text-[#1D3045] px-2 py-0.5 text-[10px] tracking-[0.22em] uppercase">
+                        Americanah
+                      </span>
+                    )}
                   </div>
 
                   {/* Clean unboxed artist tags for this entry (Subtle Wikipedia links) */}
@@ -1081,6 +1478,26 @@ export default function App() {
                   </h2>
                 </div>
 
+                {/* ADDITION 3: "Social lens" line under each entry title (1 to 9), strictly editable only by the owner */}
+                <div className="mt-5 flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-3.5 max-w-4xl">
+                  <span className="text-[10px] tracking-[0.24em] uppercase text-[#D7263D] font-medium shrink-0">
+                    Social lens
+                  </span>
+                  {isOwner ? (
+                    <input
+                      type="text"
+                      aria-label={`Social lens for ${entry.title}`}
+                      value={entry.socialLens}
+                      onChange={(e) => updateEntrySocialLens(entry.id, e.target.value)}
+                      className="w-full bg-transparent text-sm md:text-base italic text-[#1D3045]/75 focus:text-[#1D3045] border-b border-[#1D3045]/25 focus:border-[#D7263D] focus:outline-none py-0.5 transition-colors"
+                    />
+                  ) : (
+                    <p className="text-sm md:text-base italic text-[#1D3045]/75 leading-relaxed">
+                      {entry.socialLens}
+                    </p>
+                  )}
+                </div>
+
                 {/* Thin Red Line that draws in under each headline */}
                 <motion.div
                   initial={prefersReducedMotion ? false : { scaleX: 0 }}
@@ -1091,7 +1508,7 @@ export default function App() {
                 />
               </motion.div>
 
-              {/* Entry Content Grid: Left = Text Area (Editable for Owner, Read-Only for Visitors) | Right = Reusable Artist Photo Cutout Slot + Video Slot */}
+              {/* Entry Content Grid: Left = Text Area (Editable for Owner, Read-Only for Visitors) | Right = Reusable Artist Photo Cutout Slot + Video Slot (+ Audio Slot on Entry 09) */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
                 {/* Left Column (7 cols): Entry Text */}
                 <motion.div
@@ -1166,7 +1583,7 @@ export default function App() {
                   )}
                 </motion.div>
 
-                {/* Right Column (5 cols): Reusable Photo / Artist Cutout Slot + Video Slot */}
+                {/* Right Column (5 cols): Reusable Photo / Artist Cutout Slot + Video Slot + Audio Slot (for Entry 09) */}
                 <motion.div
                   initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -1174,6 +1591,17 @@ export default function App() {
                   transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
                   className="lg:col-span-5 space-y-12"
                 >
+                  {entry.hasAudioSlot && (
+                    <AudioSlot
+                      entryNumber={entry.number}
+                      entryTitle={entry.title}
+                      audioUrl={entryAudioMap[entry.id]?.url || ''}
+                      audioType={entryAudioMap[entry.id]?.type || null}
+                      onUpdateAudio={(url, type) => updateEntryAudio(entry.id, url, type)}
+                      isOwner={isOwner}
+                    />
+                  )}
+
                   <ArtistCutoutSlot
                     entryNumber={entry.number}
                     entryTitle={entry.title}
@@ -1183,14 +1611,16 @@ export default function App() {
                     isOwner={isOwner}
                   />
 
-                  <VideoSlot
-                    entryNumber={entry.number}
-                    entryTitle={entry.title}
-                    videoUrl={entry.videoUrl}
-                    videoType={entry.videoType}
-                    onUpdateVideo={(url, type) => updateEntryVideo(entry.id, url, type)}
-                    isOwner={isOwner}
-                  />
+                  {entry.id !== 'entry-09' && (
+                    <VideoSlot
+                      entryNumber={entry.number}
+                      entryTitle={entry.title}
+                      videoUrl={entry.videoUrl}
+                      videoType={entry.videoType}
+                      onUpdateVideo={(url, type) => updateEntryVideo(entry.id, url, type)}
+                      isOwner={isOwner}
+                    />
+                  )}
                 </motion.div>
               </div>
             </div>

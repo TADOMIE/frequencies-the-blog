@@ -80,10 +80,10 @@ export const FrequencyTipBubble: React.FC<FrequencyTipBubbleProps> = ({
     {
       id: 'keyboard-shortcuts',
       category: 'EASTER EGG',
-      title: 'Numeric Chapter Jump (Keys 1 — 8)',
-      body: 'Press keys 1 through 8 anywhere on your keyboard (outside text boxes) to warp straight to that chapter.',
-      actionLabel: 'Jump to 05',
-      onAction: () => onJumpToEntry('entry-05'),
+      title: 'Numeric Chapter Jump (Keys 1 — 9)',
+      body: 'Press keys 1 through 9 anywhere on your keyboard (outside text boxes) to warp straight to that chapter.',
+      actionLabel: 'Jump to 09',
+      onAction: () => onJumpToEntry('entry-09'),
     },
     {
       id: 'double-click-hero',
@@ -133,10 +133,34 @@ export const FrequencyTipBubble: React.FC<FrequencyTipBubbleProps> = ({
       },
     },
     {
+      id: 'secret-unplugged',
+      category: 'EASTER EGG',
+      title: 'Type "UNPLUGGED" or "CHORDS"',
+      body: 'Type UNPLUGGED on your keyboard to strum an open-tuning 6-string acoustic guitar chord (Eadd9) and jump straight to "09 · Unplugged".',
+      actionLabel: 'Strum Guitar',
+      onAction: () => {
+        playHarmonicChord([164.81, 246.94, 329.63, 415.3, 493.88, 659.25], 'triangle', 2.3);
+        onJumpToEntry('entry-09');
+        triggerBanner('🎸 Acoustic Open-String Strum · 09 Unplugged');
+      },
+    },
+    {
+      id: 'secret-americanah',
+      category: 'EASTER EGG',
+      title: 'Type "AMERICANAH" or "IFEMELU"',
+      body: 'Type AMERICANAH on your keyboard to play the dual Insider/Outsider polyphonic chord and warp to "Why Frequencies?" (About).',
+      actionLabel: 'Play Dual Chord',
+      onAction: () => {
+        playHarmonicChord([293.66, 369.99, 440.0, 554.37, 659.25], 'sine', 2.2);
+        onJumpToEntry('about-section');
+        triggerBanner('◈ Americanah · Insider / Outsider Resonance');
+      },
+    },
+    {
       id: 'unique-waves',
       category: 'TIP',
-      title: '8 Distinct Soundwaves',
-      body: 'Look closely at the red wave passing through each of the 8 entry titles—each waveform matches its chapter’s musical genre, from acoustic plucks to French rap cadences.',
+      title: '9 Distinct Soundwaves',
+      body: 'Look closely at the red wave passing through each of the 9 entry titles—each waveform matches its chapter’s musical genre, from acoustic plucks to French rap cadences.',
     },
   ];
 
@@ -151,7 +175,7 @@ export const FrequencyTipBubble: React.FC<FrequencyTipBubbleProps> = ({
     return () => clearInterval(interval);
   }, [tips.length]);
 
-  // Global keyboard listener for Easter Eggs (1-8 chapter jump + secret words JAZZ, CARTI, VINYL, KENDRICK)
+  // Global keyboard listener for Easter Eggs (1-9 chapter jump + secret words JAZZ, CARTI, VINYL, KENDRICK, UNPLUGGED, AMERICANAH)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -166,8 +190,8 @@ export const FrequencyTipBubble: React.FC<FrequencyTipBubbleProps> = ({
 
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
-      // Keys 1 - 8 jump directly to Entry 01 - 08
-      if (/^[1-8]$/.test(e.key)) {
+      // Keys 1 - 9 jump directly to Entry 01 - 09
+      if (/^[1-9]$/.test(e.key)) {
         const entryId = `entry-0${e.key}`;
         playHarmonicChord([220 + Number(e.key) * 55, 330 + Number(e.key) * 55], 'sine', 0.6);
         onJumpToEntry(entryId);
@@ -177,7 +201,7 @@ export const FrequencyTipBubble: React.FC<FrequencyTipBubbleProps> = ({
 
       // Track secret typed words
       if (/^[a-zA-Z]$/.test(e.key)) {
-        const nextBuffer = (keyBufferRef.current + e.key.toUpperCase()).slice(-12);
+        const nextBuffer = (keyBufferRef.current + e.key.toUpperCase()).slice(-14);
         keyBufferRef.current = nextBuffer;
 
         if (nextBuffer.endsWith('JAZZ')) {
@@ -199,6 +223,16 @@ export const FrequencyTipBubble: React.FC<FrequencyTipBubbleProps> = ({
           playHarmonicChord([220, 277.18, 329.63, 415.3], 'triangle', 1.8);
           onJumpToEntry('entry-04');
           triggerBanner('★ Secret Unlocked: New School Frequency');
+        } else if (nextBuffer.endsWith('UNPLUGGED') || nextBuffer.endsWith('CHORDS')) {
+          keyBufferRef.current = '';
+          playHarmonicChord([164.81, 246.94, 329.63, 415.3, 493.88, 659.25], 'triangle', 2.3);
+          onJumpToEntry('entry-09');
+          triggerBanner('🎸 Secret Unlocked: Acoustic 6-String Strum (09 Unplugged)');
+        } else if (nextBuffer.endsWith('AMERICANAH') || nextBuffer.endsWith('IFEMELU')) {
+          keyBufferRef.current = '';
+          playHarmonicChord([293.66, 369.99, 440.0, 554.37, 659.25], 'sine', 2.2);
+          onJumpToEntry('about-section');
+          triggerBanner('◈ Secret Unlocked: Americanah Insider / Outsider Resonance');
         }
       }
     };

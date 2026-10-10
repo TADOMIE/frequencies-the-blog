@@ -7,7 +7,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Entry identifier (e.g., entry-01).",
+          "description": "Entry identifier (e.g., entry-01 through entry-09).",
           "minLength": 1,
           "maxLength": 64,
           "pattern": "^[a-zA-Z0-9_\\-]+$"
@@ -16,6 +16,11 @@
           "type": "string",
           "description": "Entry prose text content.",
           "maxLength": 50000
+        },
+        "socialLens": {
+          "type": "string",
+          "description": "Short social lens sentence under the entry title.",
+          "maxLength": 2000
         },
         "photoUrl": {
           "type": "string",
@@ -42,12 +47,22 @@
     },
     "BlogProfile": {
       "title": "BlogProfile",
-      "description": "Author profile metadata for Guindo Luc.",
+      "description": "Author profile and About section metadata for Guindo Luc.",
       "type": "object",
       "properties": {
         "authorPhotoUrl": {
           "type": "string",
           "description": "URL or data URL of the author portrait photo.",
+          "maxLength": 800000
+        },
+        "aboutText": {
+          "type": "string",
+          "description": "Editable text for the Why Frequencies? About section.",
+          "maxLength": 20000
+        },
+        "aboutPhotoUrl": {
+          "type": "string",
+          "description": "URL or data URL of the optional photo in the Why Frequencies? About section.",
           "maxLength": 800000
         },
         "updatedAt": {
@@ -66,7 +81,7 @@
     },
     "/settings/{settingId}": {
       "schema": { "$ref": "#/entities/BlogProfile" },
-      "description": "Publicly readable author profile settings editable strictly by the blog owner."
+      "description": "Publicly readable author profile and about section settings editable strictly by the blog owner."
     }
   }
 }

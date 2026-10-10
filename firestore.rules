@@ -31,23 +31,26 @@ service cloud.firestore {
         && request.auth.token.email == 'tadominohero@gmail.com';
     }
 
-    // Validation Blueprint for BlogEntry
+    // Validation Blueprint for BlogEntry (supports optional socialLens field)
     function isValidBlogEntry(data, entryId) {
       return data.keys().hasAll(['id', 'text', 'photoUrl', 'videoUrl', 'videoType', 'updatedAt'])
-        && data.keys().hasOnly(['id', 'text', 'photoUrl', 'videoUrl', 'videoType', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'text', 'socialLens', 'photoUrl', 'videoUrl', 'videoType', 'updatedAt'])
         && data.id is string && data.id == entryId && data.id.size() >= 1 && data.id.size() <= 64
         && data.text is string && data.text.size() <= 50000
+        && (!('socialLens' in data) || (data.socialLens is string && data.socialLens.size() <= 2000))
         && data.photoUrl is string && data.photoUrl.size() <= 800000
         && data.videoUrl is string && data.videoUrl.size() <= 4096
         && data.videoType is string && data.videoType in ['file', 'link', 'none']
         && data.updatedAt == request.time;
     }
 
-    // Validation Blueprint for BlogProfile
+    // Validation Blueprint for BlogProfile (supports optional aboutText and aboutPhotoUrl fields)
     function isValidBlogProfile(data) {
       return data.keys().hasAll(['authorPhotoUrl', 'updatedAt'])
-        && data.keys().hasOnly(['authorPhotoUrl', 'updatedAt'])
+        && data.keys().hasOnly(['authorPhotoUrl', 'aboutText', 'aboutPhotoUrl', 'updatedAt'])
         && data.authorPhotoUrl is string && data.authorPhotoUrl.size() <= 800000
+        && (!('aboutText' in data) || (data.aboutText is string && data.aboutText.size() <= 20000))
+        && (!('aboutPhotoUrl' in data) || (data.aboutPhotoUrl is string && data.aboutPhotoUrl.size() <= 800000))
         && data.updatedAt == request.time;
     }
 
@@ -60,7 +63,7 @@ service cloud.firestore {
         && isValidId(entryId)
         && isValidBlogEntry(incoming(), entryId)
         && incoming().id == existing().id
-        && incoming().diff(existing()).affectedKeys().hasOnly(['text', 'photoUrl', 'videoUrl', 'videoType', 'updatedAt']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['text', 'socialLens', 'photoUrl', 'videoUrl', 'videoType', 'updatedAt']);
       allow delete: if false;
     }
 
@@ -73,7 +76,7 @@ service cloud.firestore {
         && isValidId(settingId)
         && settingId == 'profile'
         && isValidBlogProfile(incoming())
-        && incoming().diff(existing()).affectedKeys().hasOnly(['authorPhotoUrl', 'updatedAt']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['authorPhotoUrl', 'aboutText', 'aboutPhotoUrl', 'updatedAt']);
       allow delete: if false;
     }
   }
