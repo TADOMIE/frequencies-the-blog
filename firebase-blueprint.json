@@ -65,6 +65,11 @@
           "description": "URL or data URL of the optional photo in the Why Frequencies? About section.",
           "maxLength": 800000
         },
+        "spotifyPlaylistUrl": {
+          "type": "string",
+          "description": "Optional Spotify playlist URL curated for the Frequencies blog.",
+          "maxLength": 4096
+        },
         "updatedAt": {
           "type": "string",
           "format": "date-time",

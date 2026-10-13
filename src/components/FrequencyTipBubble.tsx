@@ -164,13 +164,13 @@ export const FrequencyTipBubble: React.FC<FrequencyTipBubbleProps> = ({
     },
   ];
 
-  // Auto-reopen the bubble every 10 minutes (600,000 ms) with the next tip/easter egg
+  // Auto-reopen the bubble every 20 minutes (1,200,000 ms) with the next tip/easter egg
   useEffect(() => {
-    const TEN_MINUTES_MS = 10 * 60 * 1000;
+    const TWENTY_MINUTES_MS = 20 * 60 * 1000;
     const interval = setInterval(() => {
       setTipIndex((prev) => (prev + 1) % tips.length);
       setIsOpen(true);
-    }, TEN_MINUTES_MS);
+    }, TWENTY_MINUTES_MS);
 
     return () => clearInterval(interval);
   }, [tips.length]);
@@ -315,7 +315,7 @@ export const FrequencyTipBubble: React.FC<FrequencyTipBubbleProps> = ({
                   onClick={() => setIsOpen(false)}
                   className="text-[#1D3045] hover:text-[#D7263D] transition-colors p-0.5 cursor-pointer"
                   aria-label="Close tips bubble"
-                  title="Dismiss (reappears every 10 minutes)"
+                  title="Dismiss"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -343,7 +343,7 @@ export const FrequencyTipBubble: React.FC<FrequencyTipBubbleProps> = ({
                   </button>
                 ) : (
                   <span className="text-[9px] tracking-[0.2em] uppercase text-[#1D3045]/60">
-                    Signal · Every 10m
+                    Frequencies · Curated Signal
                   </span>
                 )}
 

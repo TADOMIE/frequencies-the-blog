@@ -45,6 +45,8 @@ export interface ArtistCutoutSlotProps {
   accentVariant?: 'red' | 'black';
   isOwner?: boolean;
   compact?: boolean;
+  artistCutoutName?: string;
+  artistWikiUrl?: string | null;
 }
 
 /**
@@ -62,6 +64,8 @@ export const ArtistCutoutSlot: React.FC<ArtistCutoutSlotProps> = ({
   accentVariant = 'red',
   isOwner = false,
   compact = false,
+  artistCutoutName,
+  artistWikiUrl,
 }) => {
   const [urlInput, setUrlInput] = useState('');
   const [showUrlField, setShowUrlField] = useState(false);
@@ -108,7 +112,25 @@ export const ArtistCutoutSlot: React.FC<ArtistCutoutSlotProps> = ({
         <div className="flex items-center gap-2 text-[10px] tracking-[0.22em] uppercase text-[#1D3045] font-medium">
           <span>{entryNumber}</span>
           <span aria-hidden="true">·</span>
-          <span>{compact ? 'Portrait' : 'Photo / Artist Cutout'}</span>
+          {artistCutoutName ? (
+            artistWikiUrl ? (
+              <a
+                href={artistWikiUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#0A0A0A] hover:text-[#D7263D] transition-colors cursor-pointer"
+                title={`Wikipedia · ${artistCutoutName}`}
+              >
+                {artistCutoutName}
+              </a>
+            ) : (
+              <span className="text-[#0A0A0A]" title={artistCutoutName}>
+                {artistCutoutName}
+              </span>
+            )
+          ) : (
+            <span>{compact ? 'Portrait' : 'Photo / Artist Cutout'}</span>
+          )}
         </div>
 
         {isOwner && photoUrl && (
@@ -202,11 +224,19 @@ export const ArtistCutoutSlot: React.FC<ArtistCutoutSlotProps> = ({
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-[10px] tracking-[0.22em] uppercase text-[#D7263D] font-medium">
                 <ImageIcon className="w-3 h-3 shrink-0" />
-                <span>{compact ? 'My Photo' : 'Empty Photo Slot'}</span>
+                <span>
+                  {compact
+                    ? 'My Photo'
+                    : artistCutoutName
+                    ? `${artistCutoutName} Slot`
+                    : 'Empty Photo Slot'}
+                </span>
               </div>
               {!compact && (
                 <p className="text-xs text-[#1D3045] leading-relaxed">
-                  Upload an isolated artist cutout (PNG/WebP) or photograph, or paste a direct image URL.
+                  {artistCutoutName
+                    ? `Upload a cutout or photo of ${artistCutoutName}, or paste a direct image URL.`
+                    : 'Upload an isolated artist cutout (PNG/WebP) or photograph, or paste a direct image URL.'}
                 </p>
               )}
             </div>

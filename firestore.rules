@@ -44,13 +44,14 @@ service cloud.firestore {
         && data.updatedAt == request.time;
     }
 
-    // Validation Blueprint for BlogProfile (supports optional aboutText and aboutPhotoUrl fields)
+    // Validation Blueprint for BlogProfile (supports optional aboutText, aboutPhotoUrl, and spotifyPlaylistUrl fields)
     function isValidBlogProfile(data) {
       return data.keys().hasAll(['authorPhotoUrl', 'updatedAt'])
-        && data.keys().hasOnly(['authorPhotoUrl', 'aboutText', 'aboutPhotoUrl', 'updatedAt'])
+        && data.keys().hasOnly(['authorPhotoUrl', 'aboutText', 'aboutPhotoUrl', 'spotifyPlaylistUrl', 'updatedAt'])
         && data.authorPhotoUrl is string && data.authorPhotoUrl.size() <= 800000
         && (!('aboutText' in data) || (data.aboutText is string && data.aboutText.size() <= 20000))
         && (!('aboutPhotoUrl' in data) || (data.aboutPhotoUrl is string && data.aboutPhotoUrl.size() <= 800000))
+        && (!('spotifyPlaylistUrl' in data) || (data.spotifyPlaylistUrl is string && data.spotifyPlaylistUrl.size() <= 4096))
         && data.updatedAt == request.time;
     }
 
@@ -76,7 +77,7 @@ service cloud.firestore {
         && isValidId(settingId)
         && settingId == 'profile'
         && isValidBlogProfile(incoming())
-        && incoming().diff(existing()).affectedKeys().hasOnly(['authorPhotoUrl', 'aboutText', 'aboutPhotoUrl', 'updatedAt']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['authorPhotoUrl', 'aboutText', 'aboutPhotoUrl', 'spotifyPlaylistUrl', 'updatedAt']);
       allow delete: if false;
     }
   }

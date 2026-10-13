@@ -91,6 +91,8 @@ const WIKIPEDIA_LINKS: Record<string, string> = {
   'Jeune Lion': 'https://fr.wikipedia.org/wiki/Jeune_Lion',
   Népal: 'https://fr.wikipedia.org/wiki/N%C3%A9pal_(rappeur)',
   Jazz: 'https://en.wikipedia.org/wiki/Jazz',
+  'Louis Armstrong': 'https://en.wikipedia.org/wiki/Louis_Armstrong',
+  'J. Cole & Kendrick Lamar': 'https://en.wikipedia.org/wiki/Kendrick_Lamar',
 };
 
 function getArtistWikiUrl(artist: string): string {
@@ -199,6 +201,8 @@ export interface BlogEntryData {
   socialLens: string;
   artistTags: string[];
   accentVariant: 'red' | 'black';
+  artistCutoutName?: string;
+  artistWikiUrl?: string | null;
   text: string;
   photoUrl: string;
   videoUrl: string;
@@ -221,6 +225,8 @@ const INITIAL_ENTRIES: BlogEntryData[] = [
       "Taste is passed down in families, and a guitar placed in a child's hands says what a family values.",
     artistTags: [],
     accentVariant: 'red',
+    artistCutoutName: 'Isaac Poudiougou',
+    artistWikiUrl: null, // Note: No Wikipedia link for Isaac per user instruction
     text: '',
     photoUrl: '',
     videoUrl: '',
@@ -262,8 +268,10 @@ const INITIAL_ENTRIES: BlogEntryData[] = [
     hasAmericanahTag: true,
     socialLens:
       'A teenager far from America chooses American rap, and like Ifemelu he watches a culture from the outside.',
-    artistTags: ['Jazz', 'Ben Webster'],
+    artistTags: ['Jazz', 'Louis Armstrong', 'Ben Webster'],
     accentVariant: 'red',
+    artistCutoutName: 'Louis Armstrong',
+    artistWikiUrl: 'https://en.wikipedia.org/wiki/Louis_Armstrong',
     text: '',
     photoUrl: '',
     videoUrl: '',
@@ -282,12 +290,14 @@ const INITIAL_ENTRIES: BlogEntryData[] = [
       'Jay-Z',
       'Kanye West',
       'Kendrick Lamar',
+      'J. Cole',
       'Tyler the Creator',
       'Isaiah Rashad',
-      'J. Cole',
       'Baby Keem',
     ],
     accentVariant: 'black',
+    artistCutoutName: 'J. Cole & Kendrick Lamar',
+    artistWikiUrl: 'https://en.wikipedia.org/wiki/Kendrick_Lamar',
     text: '',
     photoUrl: '',
     videoUrl: '',
@@ -324,6 +334,8 @@ const INITIAL_ENTRIES: BlogEntryData[] = [
     socialLens: 'French rap turns language into a craft and into a way of belonging.',
     artistTags: ['Alpha Wann', 'Luidji', 'Josman', 'Jeune Lion', 'Népal'],
     accentVariant: 'black',
+    artistCutoutName: 'Alpha Wann',
+    artistWikiUrl: 'https://fr.wikipedia.org/wiki/Alpha_Wann',
     text: '',
     photoUrl: '',
     videoUrl: '',
@@ -391,6 +403,7 @@ export default function App() {
   // About section ("Why Frequencies?") state
   const [aboutText, setAboutText] = useState<string>('');
   const [aboutPhotoUrl, setAboutPhotoUrl] = useState<string>('');
+  const [spotifyPlaylistUrl, setSpotifyPlaylistUrl] = useState<string>('');
 
   // Audio files are kept in React state only (with no localStorage)
   const [entryAudioMap, setEntryAudioMap] = useState<
@@ -429,6 +442,11 @@ export default function App() {
   useEffect(() => {
     aboutPhotoRef.current = aboutPhotoUrl;
   }, [aboutPhotoUrl]);
+
+  const spotifyPlaylistRef = useRef<string>(spotifyPlaylistUrl);
+  useEffect(() => {
+    spotifyPlaylistRef.current = spotifyPlaylistUrl;
+  }, [spotifyPlaylistUrl]);
 
   const textDebounceTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
@@ -523,6 +541,9 @@ export default function App() {
           if (typeof data.aboutPhotoUrl === 'string') {
             setAboutPhotoUrl(data.aboutPhotoUrl);
           }
+          if (typeof data.spotifyPlaylistUrl === 'string') {
+            setSpotifyPlaylistUrl(data.spotifyPlaylistUrl);
+          }
         }
       },
       (error) => {
@@ -557,7 +578,8 @@ export default function App() {
   const persistProfileSettings = async (
     nextAuthorPhoto: string,
     nextAboutText: string,
-    nextAboutPhoto: string
+    nextAboutPhoto: string,
+    nextSpotifyPlaylist: string = spotifyPlaylistRef.current
   ) => {
     if (!auth.currentUser) return;
     setSaveStatus('saving');
@@ -566,6 +588,7 @@ export default function App() {
         authorPhotoUrl: nextAuthorPhoto.slice(0, 800000),
         aboutText: nextAboutText.slice(0, 20000),
         aboutPhotoUrl: nextAboutPhoto.slice(0, 800000),
+        spotifyPlaylistUrl: nextSpotifyPlaylist.slice(0, 4096),
         updatedAt: serverTimestamp(),
       });
       setSaveStatus('saved');
@@ -678,13 +701,40 @@ export default function App() {
   const handleUpdateAboutPhoto = (photoUrl: string) => {
     if (!isOwner) return;
     setAboutPhotoUrl(photoUrl);
-    void persistProfileSettings(authorPhotoRef.current, aboutTextRef.current, photoUrl);
+    void persistProfileSettings(
+      authorPhotoRef.current,
+      aboutTextRef.current,
+      photoUrl,
+      spotifyPlaylistRef.current
+    );
   };
 
   const handleUpdateAuthorPhoto = async (photoUrl: string) => {
     if (!isOwner) return;
     setAuthorPhotoUrl(photoUrl);
-    await persistProfileSettings(photoUrl, aboutTextRef.current, aboutPhotoRef.current);
+    await persistProfileSettings(
+      photoUrl,
+      aboutTextRef.current,
+      aboutPhotoRef.current,
+      spotifyPlaylistRef.current
+    );
+  };
+
+  const handleUpdateSpotifyPlaylist = (url: string) => {
+    if (!isOwner) return;
+    setSpotifyPlaylistUrl(url);
+    setSaveStatus('saving');
+    if (textDebounceTimersRef.current['spotify-url']) {
+      clearTimeout(textDebounceTimersRef.current['spotify-url']);
+    }
+    textDebounceTimersRef.current['spotify-url'] = setTimeout(() => {
+      void persistProfileSettings(
+        authorPhotoRef.current,
+        aboutTextRef.current,
+        aboutPhotoRef.current,
+        url
+      );
+    }, 350);
   };
 
   /**
@@ -718,6 +768,7 @@ export default function App() {
             authorPhotoUrl: authorPhotoRef.current.slice(0, 800000),
             aboutText: aboutTextRef.current.slice(0, 20000),
             aboutPhotoUrl: aboutPhotoRef.current.slice(0, 800000),
+            spotifyPlaylistUrl: spotifyPlaylistRef.current.slice(0, 4096),
             updatedAt: serverTimestamp(),
           }),
         ]);
@@ -1090,7 +1141,7 @@ export default function App() {
           <motion.div
             initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-80px' }}
+            viewport={{ once: false, margin: '-80px' }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
             {/* Top Metadata Row with small navy "Americanah" tag near the title */}
@@ -1116,7 +1167,7 @@ export default function App() {
             <motion.div
               initial={prefersReducedMotion ? false : { scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
-              viewport={{ once: true, margin: '-60px' }}
+              viewport={{ once: false, margin: '-60px' }}
               transition={{ duration: 0.85, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
               className="h-[2px] bg-[#D7263D] origin-left mt-6 md:mt-8 mb-14 md:mb-20"
             />
@@ -1127,7 +1178,7 @@ export default function App() {
             <motion.div
               initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
+              viewport={{ once: false, margin: '-60px' }}
               transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
               className="lg:col-span-8 flex flex-col"
             >
@@ -1206,7 +1257,7 @@ export default function App() {
             <motion.div
               initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
+              viewport={{ once: false, margin: '-60px' }}
               transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
               className="lg:col-span-4 max-w-xs w-full"
             >
@@ -1234,7 +1285,7 @@ export default function App() {
           <motion.div
             initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-80px' }}
+            viewport={{ once: false, margin: '-80px' }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="mb-16 md:mb-24"
           >
@@ -1248,7 +1299,7 @@ export default function App() {
             <motion.div
               initial={prefersReducedMotion ? false : { scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
-              viewport={{ once: true, margin: '-80px' }}
+              viewport={{ once: false, margin: '-80px' }}
               transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
               className="h-[2px] bg-[#D7263D] origin-left mt-5"
             />
@@ -1263,7 +1314,7 @@ export default function App() {
                   key={era.key}
                   initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-60px' }}
+                  viewport={{ once: false, margin: '-60px' }}
                   transition={{
                     duration: 0.6,
                     delay: eraIdx * 0.1,
@@ -1390,7 +1441,7 @@ export default function App() {
               <motion.div
                 initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
+                viewport={{ once: false, margin: '-80px' }}
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               >
                 <div className="flex flex-wrap items-center justify-between gap-4 text-[11px] tracking-[0.24em] uppercase text-[#1D3045] mb-6">
@@ -1502,7 +1553,7 @@ export default function App() {
                 <motion.div
                   initial={prefersReducedMotion ? false : { scaleX: 0 }}
                   whileInView={{ scaleX: 1 }}
-                  viewport={{ once: true, margin: '-60px' }}
+                  viewport={{ once: false, margin: '-60px' }}
                   transition={{ duration: 0.85, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
                   className="h-[2px] bg-[#D7263D] origin-left mt-6 md:mt-8 mb-14 md:mb-20"
                 />
@@ -1514,7 +1565,7 @@ export default function App() {
                 <motion.div
                   initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-60px' }}
+                  viewport={{ once: false, margin: '-60px' }}
                   transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
                   className="lg:col-span-7 flex flex-col"
                 >
@@ -1587,7 +1638,7 @@ export default function App() {
                 <motion.div
                   initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-60px' }}
+                  viewport={{ once: false, margin: '-60px' }}
                   transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
                   className="lg:col-span-5 space-y-12"
                 >
@@ -1609,6 +1660,8 @@ export default function App() {
                     onUpdatePhoto={(url) => updateEntryPhoto(entry.id, url)}
                     accentVariant={entry.accentVariant}
                     isOwner={isOwner}
+                    artistCutoutName={entry.artistCutoutName}
+                    artistWikiUrl={entry.artistWikiUrl}
                   />
 
                   {entry.id !== 'entry-09' && (
@@ -1631,7 +1684,7 @@ export default function App() {
       {/* 4. FOOTER: Closing note, compact author photo slot for Guindo Luc, blog title, owner lock toggle, and back-to-top link */}
       <footer className="bg-[#FFFFFF] py-16 md:py-24">
         <div className="max-w-[1440px] mx-auto px-6 md:px-12 space-y-14">
-          {/* CSS selector 1 target: Footer first inner div with much smaller personal photo slot */}
+          {/* CSS selector 1 target: Footer first inner div with personal photo slot and curated Spotify playlist banner */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
             <div className="space-y-4 max-w-2xl">
               <div className="text-[11px] tracking-[0.24em] uppercase text-[#1D3045]">
@@ -1653,6 +1706,56 @@ export default function App() {
                   </a>
                 </footer>
               </blockquote>
+
+              {/* Red-lined Spotify Logo & Curated Blog Playlist Link */}
+              <div className="pt-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="inline-flex items-center gap-3 border border-[#D7263D] bg-[#FFFFFF] px-3.5 py-2 group/spot shadow-[2px_2px_0px_#D7263D]">
+                    {/* Red Lined Spotify Logo SVG */}
+                    <svg
+                      role="img"
+                      viewBox="0 0 24 24"
+                      className="w-5 h-5 text-[#D7263D] fill-none stroke-current shrink-0"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-label="Spotify Logo"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M7.8 9.5c3.2-1 6.8-.7 9.8.8" />
+                      <path d="M8.5 12.8c2.6-.8 5.4-.5 7.8.6" />
+                      <path d="M9.2 16c2-.5 4.1-.3 6 .5" />
+                    </svg>
+
+                    {spotifyPlaylistUrl ? (
+                      <a
+                        href={spotifyPlaylistUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs tracking-[0.2em] uppercase text-[#0A0A0A] hover:text-[#D7263D] font-medium transition-colors"
+                      >
+                        Listen to the Frequencies Playlist on Spotify ↗
+                      </a>
+                    ) : (
+                      <span className="text-xs tracking-[0.18em] uppercase text-[#1D3045]/70">
+                        Frequencies Official Playlist
+                      </span>
+                    )}
+                  </div>
+
+                  {isOwner && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="url"
+                        value={spotifyPlaylistUrl}
+                        onChange={(e) => handleUpdateSpotifyPlaylist(e.target.value)}
+                        placeholder="Paste Spotify playlist URL..."
+                        className="text-xs px-2.5 py-1.5 border border-[#0A0A0A]/30 focus:border-[#D7263D] focus:outline-none w-56 sm:w-64"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Much smaller compact personal photo slot (w-36 / 144px) */}
